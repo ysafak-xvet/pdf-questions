@@ -17,7 +17,7 @@ export const pdfFetcherTool = createTool({
   execute: async ({ context, mastra }) => {
     const { pdfUrl } = context;
 
-    console.log('📥 Downloading PDF from URL:', pdfUrl);
+    console.log('📥 Downloading PDF from URL hola:', pdfUrl);
 
     try {
       // Step 1: Download the PDF
