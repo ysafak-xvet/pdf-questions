@@ -97,24 +97,30 @@ ${extractedText.substring(0, MAX_TEXT_LENGTH)}`,
 
 // Helper function to parse questions from generated text
 function parseQuestionsFromText(text: string, maxQuestions: number): string[] {
-  // Split by common question patterns and clean up
-  const lines = text
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
-    .filter(line => line.includes('?') || line.match(/^\d+[\.\)]/)); // Question marks or numbered items
+  // Some LLMs return multiple numbered questions on a single line.
+  // Ensure numbered items always start on a new line so we can split reliably.
+  const normalised = text.replace(/(\d+[\.\)]\s*)/g, '\n$1');
 
-  // Extract actual questions
-  const questions = lines
-    .map(line => {
-      // Remove numbering patterns like "1.", "1)", etc.
-      let cleaned = line.replace(/^\d+[\.\)]\s*/, '');
-      // Remove bullet points
+  // Break into potential question segments, splitting on newlines and question marks
+  const segments = normalised
+    .split('\n')
+    .flatMap(line =>
+      line
+        .split('?')
+        .map(part => part.trim())
+        .filter(part => part.length > 0)
+        .map(part => part + '?'),
+    );
+
+  // Clean up numbering/bullets and filter out short strings
+  const questions = segments
+    .map(segment => {
+      let cleaned = segment.replace(/^\d+[\.\)]\s*/, '');
       cleaned = cleaned.replace(/^[\-\*\•]\s*/, '');
       return cleaned.trim();
     })
-    .filter(q => q.length > 5) // Filter out very short strings
-    .slice(0, maxQuestions); // Limit to specified max questions
+    .filter(q => q.length > 5 && q.includes('?'))
+    .slice(0, maxQuestions);
 
   return questions;
 }
